@@ -18,12 +18,12 @@ def load_db():
 
 db = load_db()
 
-# -------------------- LOAD MODEL (CLOUD SAFE FIX) --------------------
+# -------------------- LOAD MODEL (CLOUD SAFE) --------------------
 @st.cache_resource
 def load_model():
     return pipeline(
-        "text-generation",        # ✅ fixed task
-        model="distilgpt2"        # ✅ stable model
+        "text-generation",        # stable task
+        model="distilgpt2"        # cloud friendly model
     )
 
 generator = load_model()
@@ -54,9 +54,9 @@ if query:
             results = db.similarity_search(query, k=2)
             context = " ".join([r.page_content for r in results])
 
-            # 🔹 Prompt
+            # 🔹 Better prompt (important)
             prompt = f"""
-Answer the question based on the context below.
+Answer the question using the context below.
 
 Context:
 {context}
@@ -64,21 +64,26 @@ Context:
 Question:
 {query}
 
-Answer:
+Answer in simple and clear terms:
 """
 
-            # 🔹 Generate response
+            # 🔹 Generate response (FIXED)
             response = generator(
                 prompt,
-                max_length=150,
+                max_new_tokens=80,
                 do_sample=True,
-                temperature=0.7
+                temperature=0.5,
+                top_p=0.9,
+                repetition_penalty=1.2
             )
 
             answer = response[0]["generated_text"]
 
-            # 🔹 CLEAN OUTPUT (IMPORTANT)
+            # 🔹 CLEAN OUTPUT
             answer = answer.replace(prompt, "").strip()
+
+            if "Answer:" in answer:
+                answer = answer.split("Answer:")[-1].strip()
 
             # fallback
             if len(answer) < 5:
