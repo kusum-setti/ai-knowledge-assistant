@@ -18,12 +18,12 @@ def load_db():
 
 db = load_db()
 
-# -------------------- LOAD MODEL (FIXED) --------------------
+# -------------------- LOAD MODEL (CLOUD SAFE) --------------------
 @st.cache_resource
 def load_model():
     return pipeline(
         "text2text-generation",
-        model="google/flan-t5-base"
+        model="google/flan-t5-small"   # 🔥 FIXED VERSION
     )
 
 generator = load_model()
@@ -54,7 +54,7 @@ if query:
             results = db.similarity_search(query, k=2)
             context = " ".join([r.page_content for r in results])
 
-            # 🔹 Better prompt (IMPORTANT)
+            # 🔹 Better prompt
             prompt = f"""
 Answer the question based only on the context below.
 
@@ -64,18 +64,18 @@ Context:
 Question:
 {query}
 
-Answer in a clear and short paragraph:
+Answer in a short, clear paragraph:
 """
 
             # 🔹 Generate response
             response = generator(
                 prompt,
-                max_length=200
+                max_length=150
             )
 
             answer = response[0]["generated_text"].strip()
 
-            # Fallback if model gives empty or bad answer
+            # 🔹 Safety fallback
             if len(answer) < 5:
                 answer = "Sorry, I couldn't find a clear answer in the provided data."
 
