@@ -1,66 +1,59 @@
-\# 🤖 AI Knowledge Assistant (RAG Chatbot)
+# 🤖 AI Knowledge Assistant (RAG + Local LLM)
 
+## 🚀 Overview
 
+This project is a Retrieval-Augmented Generation (RAG) based AI assistant that answers questions using custom knowledge instead of relying only on model memory.
 
-\## Overview
+It combines semantic search with language generation to produce more accurate and context-aware responses.
 
+---
 
+## 🧠 Tech Stack
 
-This project is a Retrieval-Augmented Generation (RAG) based chatbot that answers questions using custom data and a local LLM.
+* Python
+* Streamlit
+* LangChain
+* FAISS (Vector Database)
+* HuggingFace Embeddings
+* Ollama (LLaMA3 / Phi3)
 
+---
 
+## ⚙️ Features
 
-\## Tech Stack
+* ChatGPT-like UI
+* Context-aware answers using RAG
+* Local LLM (no API cost)
+* Fast and lightweight inference
+* Custom knowledge base support
 
+---
 
-
-\* Python
-
-\* Streamlit
-
-\* LangChain
-
-\* FAISS
-
-\* HuggingFace Embeddings
-
-\* Ollama (LLaMA 3 / Phi-3)
-
-
-
-\## Features
-
-
-
-\* ChatGPT-like UI
-
-\* Context-aware answers
-
-\* Local LLM (no API cost)
-
-\* Model selection (fast vs accurate)
-
-
-
-\## How to Run
-
-
+## ▶️ How to Run
 
 ```bash
-
 pip install -r requirements.txt
-
 python -m streamlit run ui.py
-
 ```
 
+---
 
+## 💡 Use Cases
 
-\## Author
+* Personal knowledge assistant
+* Document Q&A system
+* AI-powered internal search tools
 
+---
 
+## 📌 Future Improvements
 
-Your Name
+* PDF/document upload support
+* Chat history memory
+* Deployment on cloud
 
+---
 
+## 👤 Author
 
+Kusumanjali Setti
