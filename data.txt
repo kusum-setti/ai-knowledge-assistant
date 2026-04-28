@@ -1,0 +1,3 @@
+Transformers are neural networks that use attention.
+RAG stands for Retrieval Augmented Generation.
+RAG retrieves information before generating answers.
