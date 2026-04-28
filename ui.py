@@ -11,7 +11,7 @@ st.title("🤖 AI Knowledge Assistant")
 # -------------------- MODEL SELECTOR --------------------
 model_choice = st.selectbox(
     "Choose model:",
-    ["distilgpt2"]   # simplified for cloud
+    ["distilgpt2"]
 )
 
 # -------------------- LOAD DATABASE --------------------
@@ -27,7 +27,11 @@ db = load_db()
 # -------------------- LOAD MODEL --------------------
 @st.cache_resource
 def load_model():
-    return pipeline("text-generation", model="distilgpt2")
+    return pipeline(
+        "text-generation",
+        model="distilgpt2",
+        truncation=True
+    )
 
 generator = load_model()
 
@@ -35,7 +39,7 @@ generator = load_model()
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display previous chat
+# Display chat history
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
@@ -53,14 +57,16 @@ if query:
     with st.chat_message("assistant"):
         with st.spinner("Thinking... ⏳"):
 
-            # 🔹 RAG retrieval (UNCHANGED)
+            # 🔹 RAG retrieval
             results = db.similarity_search(query, k=2)
             context = " ".join([r.page_content for r in results])
 
+            # 🔹 Better prompt (IMPORTANT)
             prompt = f"""
 You are a helpful AI assistant.
 
-Use the context below to answer clearly and concisely.
+Answer the question ONLY using the context below.
+If the answer is not present, say "I don't know based on the given data."
 
 Context:
 {context}
@@ -71,17 +77,22 @@ Question:
 Answer:
 """
 
-            # 🔹 NEW MODEL (REPLACES OLLAMA)
+            # 🔹 Generate response
             response = generator(
                 prompt,
-                max_length=200,
-                num_return_sequences=1
+                max_length=150,
+                do_sample=True,
+                temperature=0.7
             )
 
-            answer = response[0]["generated_text"]
+            raw_output = response[0]["generated_text"]
 
-            # Clean output (optional)
-            answer = answer.replace(prompt, "").strip()
+            # 🔹 Clean output
+            answer = raw_output.replace(prompt, "").strip()
+
+            # fallback safety
+            if len(answer) < 5:
+                answer = "I couldn't find a clear answer from the data."
 
             st.markdown(answer)
 
