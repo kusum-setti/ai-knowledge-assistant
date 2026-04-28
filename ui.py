@@ -18,12 +18,12 @@ def load_db():
 
 db = load_db()
 
-# -------------------- LOAD MODEL (CLOUD SAFE) --------------------
+# -------------------- LOAD MODEL (BETTER MODEL) --------------------
 @st.cache_resource
 def load_model():
     return pipeline(
-        "text-generation",        # stable task
-        model="distilgpt2"        # cloud friendly model
+        "text2text-generation",
+        model="google/flan-t5-small"
     )
 
 generator = load_model()
@@ -32,31 +32,31 @@ generator = load_model()
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display previous chat
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# -------------------- USER INPUT --------------------
+# -------------------- INPUT --------------------
 query = st.chat_input("Ask me anything...")
 
 if query:
-    # Show user message
     st.session_state.messages.append({"role": "user", "content": query})
     with st.chat_message("user"):
         st.markdown(query)
 
-    # Generate response
     with st.chat_message("assistant"):
         with st.spinner("Thinking... ⏳"):
 
-            # 🔹 RAG retrieval
+            # RAG retrieval
             results = db.similarity_search(query, k=2)
             context = " ".join([r.page_content for r in results])
 
-            # 🔹 Better prompt (important)
+            # 🔥 STRONG PROMPT (IMPORTANT)
             prompt = f"""
-Answer the question using the context below.
+You are a helpful AI assistant.
+
+Answer ONLY using the context below.
+If the answer is not in the context, say: "I don't know."
 
 Context:
 {context}
@@ -64,32 +64,23 @@ Context:
 Question:
 {query}
 
-Answer in simple and clear terms:
+Answer:
 """
 
-            # 🔹 Generate response (FIXED)
             response = generator(
                 prompt,
-                max_new_tokens=80,
-                do_sample=True,
-                temperature=0.5,
-                top_p=0.9,
-                repetition_penalty=1.2
+                max_new_tokens=120
             )
 
-            answer = response[0]["generated_text"]
+            answer = response[0]["generated_text"].strip()
 
-            # 🔹 CLEAN OUTPUT
-            answer = answer.replace(prompt, "").strip()
-
+            # cleanup
             if "Answer:" in answer:
                 answer = answer.split("Answer:")[-1].strip()
 
-            # fallback
             if len(answer) < 5:
-                answer = "Sorry, I couldn't find a clear answer in the data."
+                answer = "I don't know."
 
             st.markdown(answer)
 
-    # Save assistant response
     st.session_state.messages.append({"role": "assistant", "content": answer})
