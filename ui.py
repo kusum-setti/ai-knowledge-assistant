@@ -18,15 +18,15 @@ def load_db():
 
 db = load_db()
 
-# -------------------- LOAD MODEL (BETTER MODEL) --------------------
+# -------------------- LOAD QA MODEL (NO ERROR) --------------------
 @st.cache_resource
 def load_model():
     return pipeline(
-        "text2text-generation",
-        model="google/flan-t5-small"
+        "question-answering",
+        model="distilbert-base-cased-distilled-squad"
     )
 
-generator = load_model()
+qa_model = load_model()
 
 # -------------------- CHAT HISTORY --------------------
 if "messages" not in st.session_state:
@@ -47,39 +47,21 @@ if query:
     with st.chat_message("assistant"):
         with st.spinner("Thinking... ⏳"):
 
-            # RAG retrieval
+            # 🔹 RAG retrieval
             results = db.similarity_search(query, k=2)
             context = " ".join([r.page_content for r in results])
 
-            # 🔥 STRONG PROMPT (IMPORTANT)
-            prompt = f"""
-You are a helpful AI assistant.
-
-Answer ONLY using the context below.
-If the answer is not in the context, say: "I don't know."
-
-Context:
-{context}
-
-Question:
-{query}
-
-Answer:
-"""
-
-            response = generator(
-                prompt,
-                max_new_tokens=120
+            # 🔹 QA MODEL (BEST FIX)
+            result = qa_model(
+                question=query,
+                context=context
             )
 
-            answer = response[0]["generated_text"].strip()
+            answer = result["answer"]
 
-            # cleanup
-            if "Answer:" in answer:
-                answer = answer.split("Answer:")[-1].strip()
-
-            if len(answer) < 5:
-                answer = "I don't know."
+            # fallback
+            if len(answer) < 3:
+                answer = "I couldn't find a clear answer in the data."
 
             st.markdown(answer)
 
