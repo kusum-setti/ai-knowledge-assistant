@@ -8,12 +8,6 @@ from transformers import pipeline
 st.set_page_config(page_title="AI Knowledge Assistant", layout="centered")
 st.title("🤖 AI Knowledge Assistant")
 
-# -------------------- MODEL SELECTOR --------------------
-model_choice = st.selectbox(
-    "Choose model:",
-    ["distilgpt2"]
-)
-
 # -------------------- LOAD DATABASE --------------------
 @st.cache_resource
 def load_db():
@@ -24,13 +18,12 @@ def load_db():
 
 db = load_db()
 
-# -------------------- LOAD MODEL --------------------
+# -------------------- LOAD MODEL (FIXED) --------------------
 @st.cache_resource
 def load_model():
     return pipeline(
-        "text-generation",
-        model="distilgpt2",
-        truncation=True
+        "text2text-generation",
+        model="google/flan-t5-base"
     )
 
 generator = load_model()
@@ -39,7 +32,7 @@ generator = load_model()
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display chat history
+# Display previous chat
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
@@ -63,10 +56,7 @@ if query:
 
             # 🔹 Better prompt (IMPORTANT)
             prompt = f"""
-You are a helpful AI assistant.
-
-Answer the question ONLY using the context below.
-If the answer is not present, say "I don't know based on the given data."
+Answer the question based only on the context below.
 
 Context:
 {context}
@@ -74,25 +64,20 @@ Context:
 Question:
 {query}
 
-Answer:
+Answer in a clear and short paragraph:
 """
 
             # 🔹 Generate response
             response = generator(
                 prompt,
-                max_length=150,
-                do_sample=True,
-                temperature=0.7
+                max_length=200
             )
 
-            raw_output = response[0]["generated_text"]
+            answer = response[0]["generated_text"].strip()
 
-            # 🔹 Clean output
-            answer = raw_output.replace(prompt, "").strip()
-
-            # fallback safety
+            # Fallback if model gives empty or bad answer
             if len(answer) < 5:
-                answer = "I couldn't find a clear answer from the data."
+                answer = "Sorry, I couldn't find a clear answer in the provided data."
 
             st.markdown(answer)
 
